@@ -47,9 +47,7 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            
-}
-
+        }
 
         .header-content {
             display: flex;
@@ -678,26 +676,55 @@
             gap: 10px;
             margin-top: 15px;
         }
+        
         /* Backup Quick Button */
-.backup-quick {
-    margin-left: 20px;
-}
+        .backup-quick {
+            margin-left: 20px;
+        }
 
-.backup-quick .btn {
-    padding: 8px 15px;
-    font-size: 0.9rem;
-}
+        .backup-quick .btn {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
 
-/* Custom Alerts */
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
+        /* Custom Alerts */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
 
-@keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-}
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        /* Auto-save notification */
+        .auto-save-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            animation: slideInRight 0.3s ease;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -727,6 +754,7 @@
         </div>
     </div>
 </header>
+
     <!-- Main Dashboard -->
     <div class="container">
         <div class="dashboard">
@@ -840,27 +868,29 @@
                             </div>
                         </div>
                     </div>
+                    
                     <!-- Backup de Dados -->
-<div class="card mt-3">
-    <h3>Backup de Dados</h3>
-    <p>Faça backup regularmente para não perder suas informações. Os dados são salvos apenas no seu navegador atual.</p>
-    
-    <div class="grid-3" style="margin-bottom: 15px;">
-        <button class="btn" onclick="exportData()">
-            <i class="fas fa-download"></i> Exportar Dados
-        </button>
-        <button class="btn btn-secondary" onclick="importData()">
-            <i class="fas fa-upload"></i> Importar Dados
-        </button>
-        <button class="btn btn-secondary" onclick="showBackupInfo()">
-            <i class="fas fa-info-circle"></i> Como Fazer Backup
-        </button>
-    </div>
-    
-    <div class="alert alert-info">
-        <i class="fas fa-lightbulb"></i> <strong>Recomendação:</strong> Exporte seus dados toda semana e salve o arquivo no Google Drive ou no seu computador.
-    </div>
-</div>
+                    <div class="card mt-3">
+                        <h3>Backup de Dados</h3>
+                        <p>Faça backup regularmente para não perder suas informações. Os dados são salvos apenas no seu navegador atual.</p>
+                        
+                        <div class="grid-3" style="margin-bottom: 15px;">
+                            <button class="btn" onclick="exportData()">
+                                <i class="fas fa-download"></i> Exportar Dados
+                            </button>
+                            <button class="btn btn-secondary" onclick="importData()">
+                                <i class="fas fa-upload"></i> Importar Dados
+                            </button>
+                            <button class="btn btn-secondary" onclick="showBackupInfo()">
+                                <i class="fas fa-info-circle"></i> Como Fazer Backup
+                            </button>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-lightbulb"></i> <strong>Recomendação:</strong> Exporte seus dados toda semana e salve o arquivo no Google Drive ou no seu computador.
+                        </div>
+                    </div>
+                    
                     <div class="card mt-3">
                         <h3>Dica do Dia</h3>
                         <p>Lembre-se de que a vitamina D é essencial para a absorção de cálcio e pode ser obtida não apenas através da alimentação, mas também pela exposição solar moderada. Para indivíduos com pele clara, 15 minutos diários ao sol são suficientes.</p>
@@ -1522,7 +1552,7 @@
     <footer>
         <div class="container">
             <p>NutriStudy - Plataforma de Estudos para Nutrição</p>
-            <p>Desenvolvida para Gabriely Almeida &copy; 2026</p>
+            <p>Desenvolvida para Gabriely Almeida &copy; 2023</p>
             <div class="footer-links">
                 <a href="#"><i class="fab fa-instagram"></i> Instagram</a>
                 <a href="#"><i class="fas fa-envelope"></i> Contato</a>
@@ -1532,8 +1562,21 @@
     </footer>
 
     <script>
+    // ============================================
+    // CORREÇÃO CRÍTICA: SISTEMA DE PERSISTÊNCIA MELHORADO
+    // ============================================
+
+    // Versão dos dados - MUDE SEMPRE QUE ATUALIZAR A ESTRUTURA
+    const DATA_VERSION = '2.0.0';
+    const STORAGE_KEY = 'nutristudy_gabriely_data_v2';
+
     // Global data storage
     let userData = {
+        // METADADOS IMPORTANTES
+        _version: DATA_VERSION,
+        _lastSave: new Date().toISOString(),
+        
+        // SEUS DADOS
         hydration: {
             current: 0,
             goal: 2000,
@@ -1572,6 +1615,557 @@
         anthropometricAssessments: []
     };
 
+    // ============================================
+    // SISTEMA DE SALVAR/CARREGAR - CORRIGIDO
+    // ============================================
+
+    // Salvar dados com MÚLTIPLOS backups
+    function saveData() {
+        try {
+            // Atualiza metadados
+            userData._lastSave = new Date().toISOString();
+            userData._version = DATA_VERSION;
+            
+            // 1. SALVA NO LOCALSTORAGE (principal)
+            const dataStr = JSON.stringify(userData);
+            localStorage.setItem(STORAGE_KEY, dataStr);
+            
+            // 2. SALVA BACKUP NO SESSIONSTORAGE (redundância)
+            try {
+                sessionStorage.setItem('nutristudy_backup', dataStr);
+            } catch (e) {
+                console.log('SessionStorage cheio, ignorando backup...');
+            }
+            
+            // 3. SALVA EM OUTRA CHAVE TAMBÉM (extra backup)
+            localStorage.setItem('nutristudy_backup_' + new Date().getDate(), dataStr);
+            
+            // 4. Mantém compatibilidade com versão antiga
+            localStorage.setItem('nutristudy_gabriely', dataStr);
+            
+            console.log('✅ Dados salvos com sucesso!', new Date().toLocaleTimeString());
+            
+            // Mostra notificação visual (opcional)
+            showAutoSaveNotification();
+            
+            return true;
+            
+        } catch (error) {
+            console.error('❌ ERRO ao salvar dados:', error);
+            
+            // Tenta salvar de forma simplificada
+            try {
+                const simpleData = {
+                    hydration: userData.hydration,
+                    tasks: userData.tasks,
+                    notes: userData.notes,
+                    flashcards: userData.flashcards
+                };
+                localStorage.setItem('nutristudy_emergency', JSON.stringify(simpleData));
+                console.log('✅ Dados essenciais salvos em backup de emergência');
+            } catch (e2) {
+                console.error('❌ Falha até no backup de emergência');
+            }
+            
+            return false;
+        }
+    }
+
+    // Carregar dados de TODAS as fontes possíveis
+    function loadData() {
+        try {
+            console.log('🔍 Buscando dados salvos...');
+            
+            // Lista de possíveis locais onde os dados podem estar
+            const possibleKeys = [
+                STORAGE_KEY,                    // Chave principal atual
+                'nutristudy_gabriely',          // Chave antiga
+                'nutristudy_backup',            // Backup no sessionStorage
+                'nutristudy_emergency'          // Backup de emergência
+            ];
+            
+            // Adiciona backups diários
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                possibleKeys.push('nutristudy_backup_' + date.getDate());
+            }
+            
+            let loadedData = null;
+            
+            // Tenta cada uma das chaves
+            for (const key of possibleKeys) {
+                const stored = localStorage.getItem(key) || sessionStorage.getItem(key);
+                
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        
+                        // Verifica se tem dados válidos
+                        if (parsed && typeof parsed === 'object') {
+                            console.log('📂 Dados encontrados em:', key);
+                            loadedData = parsed;
+                            break;
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Dados inválidos em', key);
+                    }
+                }
+            }
+            
+            if (loadedData) {
+                // VERIFICA VERSÃO
+                if (loadedData._version !== DATA_VERSION) {
+                    console.log('⚠️ Versão diferente:', loadedData._version, '->', DATA_VERSION);
+                    
+                    // Migração de versão
+                    if (confirm('Dados de versão anterior encontrados. Deseja migrar para a nova versão?')) {
+                        loadedData = migrateData(loadedData);
+                    }
+                }
+                
+                // MERGE dos dados (preserva novos campos)
+                userData = deepMerge(userData, loadedData);
+                
+                // GARANTE que arrays existam
+                ensureDataStructure();
+                
+                console.log('✅ Dados carregados com sucesso!');
+                console.log('📊 Estatísticas:', {
+                    notas: userData.notes?.length || 0,
+                    flashcards: userData.flashcards?.length || 0,
+                    tarefas: userData.tasks?.length || 0
+                });
+                
+            } else {
+                console.log('ℹ️ Nenhum dado salvo encontrado, usando padrão');
+            }
+            
+            // Atualiza a interface
+            updateAllDisplays();
+            
+            return true;
+            
+        } catch (error) {
+            console.error('❌ ERRO crítico ao carregar dados:', error);
+            alert('⚠️ Erro ao carregar dados anteriores. Usando configuração padrão.');
+            return false;
+        }
+    }
+
+    // Função para garantir estrutura dos dados
+    function ensureDataStructure() {
+        // Garante que objetos existam
+        userData.hydration = userData.hydration || { current: 0, goal: 2000, history: [] };
+        userData.flashcards = userData.flashcards || [];
+        userData.mealPlans = userData.mealPlans || {};
+        userData.calculations = userData.calculations || [];
+        userData.bmiHistory = userData.bmiHistory || [];
+        userData.notes = userData.notes || [];
+        userData.tasks = userData.tasks || [];
+        userData.studyProgress = userData.studyProgress || {
+            daily: 0,
+            weekly: [0, 0, 0, 0, 0, 0, 0],
+            subjects: [],
+            dailyGoal: 120,
+            weeklyGoal: 840
+        };
+        userData.sessionsHistory = userData.sessionsHistory || [];
+        userData.anthropometricAssessments = userData.anthropometricAssessments || [];
+        
+        // Garante arrays
+        if (!Array.isArray(userData.studyProgress.weekly)) {
+            userData.studyProgress.weekly = [0, 0, 0, 0, 0, 0, 0];
+        }
+        if (!Array.isArray(userData.studyProgress.subjects)) {
+            userData.studyProgress.subjects = [];
+        }
+    }
+
+    // Merge profundo de objetos
+    function deepMerge(target, source) {
+        const output = { ...target };
+        
+        if (isObject(target) && isObject(source)) {
+            Object.keys(source).forEach(key => {
+                if (isObject(source[key])) {
+                    if (!(key in target)) {
+                        output[key] = source[key];
+                    } else {
+                        output[key] = deepMerge(target[key], source[key]);
+                    }
+                } else {
+                    output[key] = source[key];
+                }
+            });
+        }
+        
+        return output;
+    }
+
+    function isObject(item) {
+        return item && typeof item === 'object' && !Array.isArray(item);
+    }
+
+    // Migração de dados entre versões
+    function migrateData(oldData) {
+        console.log('🔄 Migrando dados...');
+        
+        // Preserva dados importantes
+        const migrated = {
+            _version: DATA_VERSION,
+            _lastSave: new Date().toISOString(),
+            hydration: oldData.hydration || userData.hydration,
+            flashcards: oldData.flashcards || userData.flashcards,
+            mealPlans: oldData.mealPlans || userData.mealPlans,
+            calculations: oldData.calculations || userData.calculations,
+            bmiHistory: oldData.bmiHistory || userData.bmiHistory,
+            studySessions: oldData.studySessions || userData.studySessions,
+            notes: oldData.notes || userData.notes,
+            tasks: oldData.tasks || userData.tasks,
+            studyProgress: oldData.studyProgress || userData.studyProgress,
+            sessionsHistory: oldData.sessionsHistory || userData.sessionsHistory,
+            anthropometricAssessments: oldData.anthropometricAssessments || userData.anthropometricAssessments
+        };
+        
+        return migrated;
+    }
+
+    // ============================================
+    // NOTIFICAÇÕES DE SALVAMENTO
+    // ============================================
+
+    function showAutoSaveNotification() {
+        // Remove notificação anterior
+        const existing = document.querySelector('.auto-save-notification');
+        if (existing) existing.remove();
+        
+        // Cria nova notificação
+        const notification = document.createElement('div');
+        notification.className = 'auto-save-notification';
+        notification.innerHTML = `
+            <i class="fas fa-check-circle"></i> Dados salvos
+            <span class="time">${new Date().toLocaleTimeString().slice(0,5)}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove após 3 segundos
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }, 3000);
+    }
+
+    // ============================================
+    // BACKUP E EXPORTAÇÃO
+    // ============================================
+
+    function exportData() {
+        try {
+            // Garante dados atualizados
+            saveData();
+            
+            // Prepara dados para exportação
+            const exportData = {
+                ...userData,
+                _exportDate: new Date().toISOString(),
+                _exportApp: 'NutriStudy',
+                _exportVersion: DATA_VERSION
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // Cria link de download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `nutristudy_backup_${new Date().toISOString().split('T')[0]}.json`;
+            
+            document.body.appendChild(a);
+            a.click();
+            
+            // Limpeza
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            // Mostra mensagem
+            alert(`✅ Backup exportado com sucesso!\n\nSalve o arquivo em:\n• Google Drive\n• Seu computador\n• E-mail\n\nPara restaurar: Use "Importar Dados"`);
+            
+        } catch (error) {
+            console.error('Erro ao exportar:', error);
+            alert('❌ Erro ao exportar backup. Tente novamente.');
+        }
+    }
+
+    function importData() {
+        if (!confirm('⚠️ ATENÇÃO: Isso substituirá todos os dados atuais.\n\nTem certeza que deseja continuar?')) {
+            return;
+        }
+        
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Validação básica
+                    if (!importedData || typeof importedData !== 'object') {
+                        throw new Error('Arquivo inválido');
+                    }
+                    
+                    // Remove metadados de exportação
+                    delete importedData._exportDate;
+                    delete importedData._exportApp;
+                    delete importedData._exportVersion;
+                    
+                    // Atualiza os dados
+                    userData = deepMerge(userData, importedData);
+                    saveData();
+                    
+                    alert('✅ Dados importados com sucesso!\n\nA página será recarregada.');
+                    
+                    // Recarrega a página
+                    setTimeout(() => location.reload(), 1000);
+                    
+                } catch (error) {
+                    console.error('Erro ao importar:', error);
+                    alert('❌ Erro ao importar dados. Verifique se o arquivo é válido.');
+                }
+            };
+            
+            reader.readAsText(file);
+        };
+        
+        input.click();
+    }
+
+    function showBackupInfo() {
+        const lastBackup = userData._lastSave ? 
+            new Date(userData._lastSave).toLocaleString('pt-BR') : 
+            'Nunca';
+        
+        const infoHtml = `
+            <h4>Como fazer backup corretamente</h4>
+            <ol style="text-align: left; margin-left: 20px;">
+                <li>Clique em <strong>"Exportar Dados"</strong></li>
+                <li>Salve o arquivo <code>.json</code> no seu computador</li>
+                <li>Faça uma cópia no Google Drive, OneDrive ou outro serviço de nuvem</li>
+                <li>Repita esse processo toda semana</li>
+            </ol>
+            
+            <h4>Estatísticas Atuais</h4>
+            <ul style="text-align: left; margin-left: 20px;">
+                <li><strong>Último backup:</strong> ${lastBackup}</li>
+                <li><strong>Anotações salvas:</strong> ${userData.notes?.length || 0}</li>
+                <li><strong>Flashcards:</strong> ${userData.flashcards?.length || 0}</li>
+                <li><strong>Cálculos salvos:</strong> ${userData.calculations?.length || 0}</li>
+            </ul>
+            
+            <h4>Dicas</h4>
+            <ul style="text-align: left; margin-left: 20px;">
+                <li>Mantenha pelo menos 2 backups em locais diferentes</li>
+                <li>Após formatar o computador, use "Importar Dados"</li>
+                <li>Teste seu backup ocasionalmente importando em modo anônimo</li>
+            </ul>
+        `;
+        
+        // Criar modal simples
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        `;
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        `;
+        
+        modalContent.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: var(--primary);">Informações de Backup</h3>
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                        style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray);">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            ${infoHtml}
+            <div style="margin-top: 30px; text-align: center;">
+                <button class="btn" onclick="exportData(); this.parentElement.parentElement.parentElement.remove();">
+                    <i class="fas fa-download"></i> Fazer Backup Agora
+                </button>
+                <button class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove();" style="margin-left: 10px;">
+                    Fechar
+                </button>
+            </div>
+        `;
+        
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+        
+        // Fechar ao clicar fora
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    }
+
+    // ============================================
+    // FUNÇÃO PARA ATUALIZAR TODAS AS DISPLAYS
+    // ============================================
+
+    function updateAllDisplays() {
+        // Atualiza todas as partes da interface
+        updateDashboard();
+        updateHydrationDisplay();
+        updateFlashcardDisplay();
+        loadMealPlan();
+        updateStudySessions();
+        loadTasks();
+        loadNotes();
+        updateProgressChart();
+        updateSubjectsProgress();
+        updateSessionsHistory();
+        updateWeeklyTotal();
+        updateGoalsProgress();
+        updateAnthropometricHistory();
+        updateSubjectSelect();
+        updateSavedCalculations();
+        
+        // Atualiza metas
+        if (userData.hydration) {
+            document.getElementById('water-goal-display').textContent = userData.hydration.goal;
+            document.getElementById('water-goal-input').value = userData.hydration.goal;
+        }
+        
+        if (userData.studyProgress) {
+            document.getElementById('daily-goal-input').value = userData.studyProgress.dailyGoal;
+            document.getElementById('weekly-goal-input').value = userData.studyProgress.weeklyGoal;
+        }
+        
+        // Data atual no formulário antropométrico
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('assessment-date').value = today;
+    }
+
+    // ============================================
+    // INICIALIZAÇÃO
+    // ============================================
+
+    // Auto-save quando o usuário sai da página
+    window.addEventListener('beforeunload', function() {
+        saveData();
+    });
+
+    // Auto-save a cada 30 segundos (se houver mudanças)
+    let hasUnsavedChanges = false;
+    setInterval(() => {
+        if (hasUnsavedChanges) {
+            saveData();
+            hasUnsavedChanges = false;
+        }
+    }, 30000);
+
+    // Marca quando há mudanças
+    function markChanges() {
+        hasUnsavedChanges = true;
+    }
+
+    // Inicialização quando a página carrega
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 NutriStudy iniciando...');
+        
+        // Carrega dados
+        loadData();
+        
+        // Configura evento para salvar em TODAS as ações
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('button, input, select, textarea')) {
+                setTimeout(markChanges, 100);
+            }
+        });
+        
+        // Inputs também marcam mudanças
+        document.addEventListener('input', markChanges);
+        document.addEventListener('change', markChanges);
+        
+        // Inicializa outras partes
+        setTimeout(() => {
+            // Inicializa gráfico de macros
+            if (typeof initializeMacrosChart === 'function') {
+                initializeMacrosChart();
+            }
+            
+            // Configura data de prova
+            const nextExamDate = new Date();
+            nextExamDate.setDate(nextExamDate.getDate() + 15);
+            const nextExamElement = document.getElementById('next-exam');
+            if (nextExamElement) {
+                nextExamElement.textContent = 
+                    `Fisiologia - ${nextExamDate.toLocaleDateString('pt-BR')}`;
+            }
+            
+            console.log('✅ NutriStudy totalmente carregado!');
+            
+            // Mostra quantidade de dados carregados
+            const loadInfo = document.createElement('div');
+            loadInfo.style.cssText = `
+                position: fixed;
+                bottom: 10px;
+                left: 10px;
+                background: rgba(0,0,0,0.7);
+                color: white;
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 0.8rem;
+                z-index: 10000;
+            `;
+            loadInfo.textContent = `Carregado: ${userData.notes?.length || 0} notas, ${userData.flashcards?.length || 0} flashcards`;
+            document.body.appendChild(loadInfo);
+            
+            setTimeout(() => loadInfo.remove(), 5000);
+            
+        }, 500);
+    });
+
+    // ============================================
+    // AGORA VOU MANTER TODAS AS SUAS FUNÇÕES ORIGINAIS
+    // MAS VOU MODIFICAR PARA CHAMAR saveData() E markChanges()
+    // ============================================
+
     // Timer variables
     let timerInterval;
     let timeLeft = 25 * 60;
@@ -1581,519 +2175,6 @@
 
     // Flashcards variables
     let currentFlashcardIndex = 0;
-
-    // Load data from localStorage
-    function loadData() {
-        const savedData = localStorage.getItem('nutristudy_gabriely');
-        if (savedData) {
-            const parsedData = JSON.parse(savedData);
-            // Merge with default data to ensure all properties exist
-            userData = { ...userData, ...parsedData };
-            
-            // Ensure nested objects exist
-            userData.hydration = parsedData.hydration || userData.hydration;
-            userData.flashcards = parsedData.flashcards || userData.flashcards;
-            userData.mealPlans = parsedData.mealPlans || userData.mealPlans;
-            userData.studyProgress = parsedData.studyProgress || userData.studyProgress;
-            userData.studyProgress.weekly = userData.studyProgress.weekly || [0, 0, 0, 0, 0, 0, 0];
-            userData.studyProgress.subjects = userData.studyProgress.subjects || [];
-            
-            updateDashboard();
-            updateHydrationDisplay();
-            updateFlashcardDisplay();
-            loadMealPlan();
-            updateStudySessions();
-            loadTasks();
-            loadNotes();
-            updateProgressChart();
-            updateSubjectsProgress();
-            updateSessionsHistory();
-            updateWeeklyTotal();
-            updateGoalsProgress();
-            updateAnthropometricHistory();
-            updateSubjectSelect();
-            
-            // Set today's date in anthropometric form
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('assessment-date').value = today;
-            
-            // Update water goal display
-            document.getElementById('water-goal-display').textContent = userData.hydration.goal;
-            document.getElementById('water-goal-input').value = userData.hydration.goal;
-            
-            // Update study goal displays
-            document.getElementById('daily-goal-input').value = userData.studyProgress.dailyGoal;
-            document.getElementById('weekly-goal-input').value = userData.studyProgress.weeklyGoal;
-            // Adicione esta linha no final da função loadData(), dentro do if
-setupBackupReminders();
-        }
-    }
-
-   // Save data to localStorage
-function saveData() {
-    localStorage.setItem('nutristudy_gabriely', JSON.stringify(userData));
-}
-
-// ============================================
-// BACKUP & RESTORE FUNCTIONS
-// ============================================
-
-// Exportar dados para arquivo JSON
-function exportData() {
-    try {
-        // Adiciona data do backup
-        userData.lastBackup = new Date().toISOString();
-        saveData();
-        
-        // Cria o conteúdo do arquivo
-        const dataToExport = {
-            ...userData,
-            exportDate: new Date().toLocaleString('pt-BR'),
-            appName: 'NutriStudy',
-            version: '1.0'
-        };
-        
-        const dataStr = JSON.stringify(dataToExport, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        
-        // Cria link para download
-        const a = document.createElement('a');
-        a.href = url;
-        const dateStr = new Date().toISOString().split('T')[0];
-        a.download = `nutristudy_backup_${dateStr}.json`;
-        document.body.appendChild(a);
-        a.click();
-        
-        // Limpeza
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 100);
-        
-        // Mostrar confirmação
-        showAlert('success', 'Backup exportado com sucesso!', 'Salve o arquivo em um local seguro como Google Drive ou seu computador.');
-        
-    } catch (error) {
-        console.error('Erro ao exportar dados:', error);
-        showAlert('error', 'Erro ao exportar dados', 'Tente novamente ou entre em contato com suporte.');
-    }
-}
-
-// Importar dados de arquivo JSON
-function importData() {
-    if (!confirm('ATENÇÃO: Isso substituirá todos os dados atuais. Tem certeza que deseja continuar?')) {
-        return;
-    }
-    
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.style.display = 'none';
-    
-    input.onchange = function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                
-                // Validação básica
-                if (!importedData || typeof importedData !== 'object') {
-                    throw new Error('Arquivo inválido');
-                }
-                
-                // Verifica se é um backup do NutriStudy
-                if (!importedData.appName || importedData.appName !== 'NutriStudy') {
-                    if (!confirm('Este arquivo não parece ser um backup do NutriStudy. Deseja continuar mesmo assim?')) {
-                        return;
-                    }
-                }
-                
-                // Remove campos de metadados
-                delete importedData.exportDate;
-                delete importedData.appName;
-                delete importedData.version;
-                
-                // Atualiza os dados
-                userData = importedData;
-                saveData();
-                
-                showAlert('success', 'Dados importados com sucesso!', 'A página será recarregada para aplicar as mudanças.');
-                
-                // Recarrega após 2 segundos
-                setTimeout(() => {
-                    location.reload();
-                }, 2000);
-                
-            } catch (error) {
-                console.error('Erro ao importar dados:', error);
-                showAlert('error', 'Erro ao importar dados', 'O arquivo pode estar corrompido ou no formato errado.');
-            }
-        };
-        
-        reader.onerror = function() {
-            showAlert('error', 'Erro ao ler arquivo', 'Não foi possível ler o arquivo selecionado.');
-        };
-        
-        reader.readAsText(file);
-    };
-    
-    document.body.appendChild(input);
-    input.click();
-    document.body.removeChild(input);
-}
-
-// Mostrar informações sobre backup
-function showBackupInfo() {
-    const lastBackup = userData.lastBackup ? 
-        new Date(userData.lastBackup).toLocaleString('pt-BR') : 
-        'Nunca';
-    
-    const infoHtml = `
-        <h4>Como fazer backup corretamente</h4>
-        <ol style="text-align: left; margin-left: 20px;">
-            <li>Clique em <strong>"Exportar Dados"</strong></li>
-            <li>Salve o arquivo <code>.json</code> no seu computador</li>
-            <li>Faça uma cópia no Google Drive, OneDrive ou outro serviço de nuvem</li>
-            <li>Repita esse processo toda semana</li>
-        </ol>
-        
-        <h4>Estatísticas Atuais</h4>
-        <ul style="text-align: left; margin-left: 20px;">
-            <li><strong>Último backup:</strong> ${lastBackup}</li>
-            <li><strong>Anotações salvas:</strong> ${userData.notes.length}</li>
-            <li><strong>Flashcards:</strong> ${userData.flashcards.length}</li>
-            <li><strong>Cálculos salvos:</strong> ${userData.calculations.length}</li>
-        </ul>
-        
-        <h4>Dicas</h4>
-        <ul style="text-align: left; margin-left: 20px;">
-            <li>Mantenha pelo menos 2 backups em locais diferentes</li>
-            <li>Após formatar o computador, use "Importar Dados"</li>
-            <li>Teste seu backup ocasionalmente importando em modo anônimo</li>
-        </ul>
-    `;
-    
-    // Criar modal simples
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2000;
-    `;
-    
-    const modalContent = document.createElement('div');
-    modalContent.style.cssText = `
-        background: white;
-        padding: 30px;
-        border-radius: 15px;
-        max-width: 600px;
-        max-height: 80vh;
-        overflow-y: auto;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    `;
-    
-    modalContent.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="margin: 0; color: var(--primary);">Informações de Backup</h3>
-            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
-                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray);">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        ${infoHtml}
-        <div style="margin-top: 30px; text-align: center;">
-            <button class="btn" onclick="exportData(); this.parentElement.parentElement.parentElement.remove();">
-                <i class="fas fa-download"></i> Fazer Backup Agora
-            </button>
-            <button class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove();" style="margin-left: 10px;">
-                Fechar
-            </button>
-        </div>
-    `;
-    
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
-    
-    // Fechar ao clicar fora
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            document.body.removeChild(modal);
-        }
-    });
-}
-
-// Função auxiliar para mostrar alertas
-function showAlert(type, title, message) {
-    // Remove alerta anterior se existir
-    const existingAlert = document.querySelector('.custom-alert');
-    if (existingAlert) {
-        existingAlert.remove();
-    }
-    
-    const colors = {
-        success: { bg: '#E8F5E9', border: '#4CAF50', icon: 'fa-check-circle' },
-        error: { bg: '#FFEBEE', border: '#F44336', icon: 'fa-exclamation-circle' },
-        info: { bg: '#E3F2FD', border: '#2196F3', icon: 'fa-info-circle' }
-    };
-    
-    const color = colors[type] || colors.info;
-    
-    const alertDiv = document.createElement('div');
-    alertDiv.className = 'custom-alert';
-    alertDiv.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        padding: 15px 20px;
-        background: ${color.bg};
-        border-left: 5px solid ${color.border};
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 3000;
-        max-width: 400px;
-        animation: slideIn 0.3s ease;
-    `;
-    
-    alertDiv.innerHTML = `
-        <div style="display: flex; align-items: flex-start;">
-            <i class="fas ${color.icon}" style="color: ${color.border}; font-size: 1.2rem; margin-right: 10px; margin-top: 2px;"></i>
-            <div>
-                <strong style="color: ${color.border};">${title}</strong>
-                <div style="color: #333; margin-top: 5px; font-size: 0.95rem;">${message}</div>
-            </div>
-            <button onclick="this.parentElement.parentElement.remove()" 
-                    style="background: none; border: none; margin-left: 15px; cursor: pointer; color: #666;">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(alertDiv);
-    
-    // Remove automaticamente após 5 segundos
-    setTimeout(() => {
-        if (alertDiv.parentElement) {
-            alertDiv.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => {
-                if (alertDiv.parentElement) {
-                    alertDiv.remove();
-                }
-            }, 300);
-        }
-    }, 5000);
-}
-
-// Backup automático lembretes (opcional)
-function setupBackupReminders() {
-    // Verifica se faz mais de 7 dias desde o último backup
-    if (userData.lastBackup) {
-        const lastBackup = new Date(userData.lastBackup);
-        const now = new Date();
-        const diffDays = (now - lastBackup) / (1000 * 60 * 60 * 24);
-        
-        if (diffDays > 7) {
-            setTimeout(() => {
-                if (confirm('⚠️ Faz mais de 7 dias que você não faz backup dos seus dados!\n\nDeseja fazer backup agora?')) {
-                    exportData();
-                }
-            }, 3000);
-        }
-    }
-}
-
-// Mostrar informações sobre backup
-function showBackupInfo() {
-    const lastBackup = userData.lastBackup ? 
-        new Date(userData.lastBackup).toLocaleString('pt-BR') : 
-        'Nunca';
-    
-    const infoHtml = `
-        <h4>Como fazer backup corretamente</h4>
-        <ol style="text-align: left; margin-left: 20px;">
-            <li>Clique em <strong>"Exportar Dados"</strong></li>
-            <li>Salve o arquivo <code>.json</code> no seu computador</li>
-            <li>Faça uma cópia no Google Drive, OneDrive ou outro serviço de nuvem</li>
-            <li>Repita esse processo toda semana</li>
-        </ol>
-        
-        <h4>Estatísticas Atuais</h4>
-        <ul style="text-align: left; margin-left: 20px;">
-            <li><strong>Último backup:</strong> ${lastBackup}</li>
-            <li><strong>Anotações salvas:</strong> ${userData.notes.length}</li>
-            <li><strong>Flashcards:</strong> ${userData.flashcards.length}</li>
-            <li><strong>Cálculos salvos:</strong> ${userData.calculations.length}</li>
-        </ul>
-        
-        <h4>Dicas</h4>
-        <ul style="text-align: left; margin-left: 20px;">
-            <li>Mantenha pelo menos 2 backups em locais diferentes</li>
-            <li>Após formatar o computador, use "Importar Dados"</li>
-            <li>Teste seu backup ocasionalmente importando em modo anônimo</li>
-        </ul>
-    `;
-    
-    // Criar modal simples
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2000;
-    `;
-    
-    const modalContent = document.createElement('div');
-    modalContent.style.cssText = `
-        background: white;
-        padding: 30px;
-        border-radius: 15px;
-        max-width: 600px;
-        max-height: 80vh;
-        overflow-y: auto;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    `;
-    
-    modalContent.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="margin: 0; color: var(--primary);">Informações de Backup</h3>
-            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
-                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray);">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        ${infoHtml}
-        <div style="margin-top: 30px; text-align: center;">
-            <button class="btn" onclick="exportData(); this.parentElement.parentElement.parentElement.remove();">
-                <i class="fas fa-download"></i> Fazer Backup Agora
-            </button>
-            <button class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove();" style="margin-left: 10px;">
-                Fechar
-            </button>
-        </div>
-    `;
-    
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
-    
-    // Fechar ao clicar fora
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            document.body.removeChild(modal);
-        }
-    });
-}
-
-// Função auxiliar para mostrar alertas
-function showAlert(type, title, message) {
-    // Remove alerta anterior se existir
-    const existingAlert = document.querySelector('.custom-alert');
-    if (existingAlert) {
-        existingAlert.remove();
-    }
-    
-    const colors = {
-        success: { bg: '#E8F5E9', border: '#4CAF50', icon: 'fa-check-circle' },
-        error: { bg: '#FFEBEE', border: '#F44336', icon: 'fa-exclamation-circle' },
-        info: { bg: '#E3F2FD', border: '#2196F3', icon: 'fa-info-circle' }
-    };
-    
-    const color = colors[type] || colors.info;
-    
-    const alertDiv = document.createElement('div');
-    alertDiv.className = 'custom-alert';
-    alertDiv.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        padding: 15px 20px;
-        background: ${color.bg};
-        border-left: 5px solid ${color.border};
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 3000;
-        max-width: 400px;
-        animation: slideIn 0.3s ease;
-    `;
-    
-    alertDiv.innerHTML = `
-        <div style="display: flex; align-items: flex-start;">
-            <i class="fas ${color.icon}" style="color: ${color.border}; font-size: 1.2rem; margin-right: 10px; margin-top: 2px;"></i>
-            <div>
-                <strong style="color: ${color.border};">${title}</strong>
-                <div style="color: #333; margin-top: 5px; font-size: 0.95rem;">${message}</div>
-            </div>
-            <button onclick="this.parentElement.parentElement.remove()" 
-                    style="background: none; border: none; margin-left: 15px; cursor: pointer; color: #666;">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(alertDiv);
-    
-    // Remove automaticamente após 5 segundos
-    setTimeout(() => {
-        if (alertDiv.parentElement) {
-            alertDiv.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => {
-                if (alertDiv.parentElement) {
-                    alertDiv.remove();
-                }
-            }, 300);
-        }
-    }, 5000);
-}
-
-// Adicionar estilos CSS para as animações
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
-
-// Backup automático lembretes (opcional)
-function setupBackupReminders() {
-    // Verifica se faz mais de 7 dias desde o último backup
-    if (userData.lastBackup) {
-        const lastBackup = new Date(userData.lastBackup);
-        const now = new Date();
-        const diffDays = (now - lastBackup) / (1000 * 60 * 60 * 24);
-        
-        if (diffDays > 7) {
-            setTimeout(() => {
-                if (confirm('⚠️ Faz mais de 7 dias que você não faz backup dos seus dados!\n\nDeseja fazer backup agora?')) {
-                    exportData();
-                }
-            }, 3000);
-        }
-    }
-}
-        localStorage.setItem('nutristudy_gabriely', JSON.stringify(userData));
-    
 
     // Tool switching functionality
     document.querySelectorAll('.tool-btn').forEach(button => {
@@ -2114,7 +2195,8 @@ function setupBackupReminders() {
             if (toolId === 'macros') {
                 setTimeout(initializeMacrosChart, 100);
             }
-            z
+            
+            markChanges(); // MARCA MUDANÇA
         });
     });
 
@@ -2138,10 +2220,14 @@ function setupBackupReminders() {
         if (toolId === 'macros') {
             setTimeout(initializeMacrosChart, 100);
         }
+        
+        markChanges(); // MARCA MUDANÇA
     }
 
     // Update dashboard with current data
     function updateDashboard() {
+        if (!userData.hydration) return;
+        
         const hydrationPercent = Math.min((userData.hydration.current / userData.hydration.goal) * 100, 100);
         document.getElementById('hydration-status').textContent = `${userData.hydration.current}/${userData.hydration.goal}ml`;
         const hydrationProgress = document.getElementById('hydration-progress');
@@ -2150,7 +2236,7 @@ function setupBackupReminders() {
         }
         
         // Update study today
-        const studyToday = userData.studyProgress.daily;
+        const studyToday = userData.studyProgress?.daily || 0;
         document.getElementById('study-today').textContent = `${studyToday} minutos`;
     }
 
@@ -2160,6 +2246,10 @@ function setupBackupReminders() {
         if (!taskList) return;
         
         taskList.innerHTML = '';
+        
+        if (!userData.tasks || !Array.isArray(userData.tasks)) {
+            userData.tasks = [];
+        }
         
         userData.tasks.forEach(task => {
             const taskItem = document.createElement('li');
@@ -2188,6 +2278,8 @@ function setupBackupReminders() {
             return;
         }
         
+        if (!userData.tasks) userData.tasks = [];
+        
         const newId = userData.tasks.length > 0 ? Math.max(...userData.tasks.map(t => t.id)) + 1 : 1;
         userData.tasks.push({
             id: newId,
@@ -2195,7 +2287,7 @@ function setupBackupReminders() {
             completed: false
         });
         
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         loadTasks();
         newTaskInput.value = '';
     }
@@ -2204,7 +2296,7 @@ function setupBackupReminders() {
         const task = userData.tasks.find(t => t.id === taskId);
         if (task) {
             task.completed = !task.completed;
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             loadTasks();
         }
     }
@@ -2213,14 +2305,14 @@ function setupBackupReminders() {
         const task = userData.tasks.find(t => t.id === taskId);
         if (task && newText.trim()) {
             task.text = newText.trim();
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             loadTasks();
         }
     }
     
     function deleteTask(taskId) {
         userData.tasks = userData.tasks.filter(t => t.id !== taskId);
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         loadTasks();
     }
 
@@ -2245,6 +2337,7 @@ function setupBackupReminders() {
         
         // Store current calculation for saving
         window.currentCalculation = { foodName, protein, carbs, fat, calories };
+        markChanges(); // MARCA MUDANÇA
     }
 
     // Save calculation
@@ -2254,8 +2347,10 @@ function setupBackupReminders() {
             return;
         }
         
+        if (!userData.calculations) userData.calculations = [];
+        
         userData.calculations.push(window.currentCalculation);
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         updateSavedCalculations();
         
         // Show success message
@@ -2271,7 +2366,7 @@ function setupBackupReminders() {
         const container = document.getElementById('saved-calculations');
         if (!container) return;
         
-        if (userData.calculations.length === 0) {
+        if (!userData.calculations || userData.calculations.length === 0) {
             container.innerHTML = '<p class="alert alert-info">Nenhum cálculo salvo ainda. Realize um cálculo e salve-o aqui.</p>';
             return;
         }
@@ -2296,7 +2391,7 @@ function setupBackupReminders() {
     function deleteCalculation(index) {
         if (confirm('Tem certeza que deseja excluir este cálculo?')) {
             userData.calculations.splice(index, 1);
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateSavedCalculations();
         }
     }
@@ -2304,7 +2399,7 @@ function setupBackupReminders() {
     function deleteAllCalculations() {
         if (confirm('Tem certeza que deseja apagar TODOS os cálculos salvos?')) {
             userData.calculations = [];
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateSavedCalculations();
         }
     }
@@ -2319,7 +2414,7 @@ function setupBackupReminders() {
 
     // Update flashcard display
     function updateFlashcardDisplay() {
-        if (userData.flashcards.length === 0) {
+        if (!userData.flashcards || userData.flashcards.length === 0) {
             document.getElementById('flashcard-question').textContent = "Nenhum flashcard disponível";
             document.getElementById('flashcard-answer').textContent = "Adicione novos flashcards para estudar";
             document.getElementById('flashcard-counter').textContent = "0/0";
@@ -2340,13 +2435,13 @@ function setupBackupReminders() {
 
     // Navigate flashcards
     function nextFlashcard() {
-        if (userData.flashcards.length === 0) return;
+        if (!userData.flashcards || userData.flashcards.length === 0) return;
         currentFlashcardIndex = (currentFlashcardIndex + 1) % userData.flashcards.length;
         updateFlashcardDisplay();
     }
 
     function prevFlashcard() {
-        if (userData.flashcards.length === 0) return;
+        if (!userData.flashcards || userData.flashcards.length === 0) return;
         currentFlashcardIndex = (currentFlashcardIndex - 1 + userData.flashcards.length) % userData.flashcards.length;
         updateFlashcardDisplay();
     }
@@ -2361,8 +2456,10 @@ function setupBackupReminders() {
             return;
         }
         
+        if (!userData.flashcards) userData.flashcards = [];
+        
         userData.flashcards.push({ question, answer });
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         
         // Update display
         currentFlashcardIndex = userData.flashcards.length - 1;
@@ -2377,7 +2474,7 @@ function setupBackupReminders() {
     }
     
     function deleteCurrentFlashcard() {
-        if (userData.flashcards.length === 0) {
+        if (!userData.flashcards || userData.flashcards.length === 0) {
             alert('Não há flashcards para apagar!');
             return;
         }
@@ -2390,13 +2487,15 @@ function setupBackupReminders() {
                 currentFlashcardIndex = Math.max(0, userData.flashcards.length - 1);
             }
             
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateFlashcardDisplay();
         }
     }
 
     // Hydration tracker functions
     function addWater(amount) {
+        if (!userData.hydration) userData.hydration = { current: 0, goal: 2000, history: [] };
+        
         userData.hydration.current += amount;
         
         // Don't exceed goal in display
@@ -2404,14 +2503,19 @@ function setupBackupReminders() {
             userData.hydration.current = userData.hydration.goal;
         }
         
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         updateHydrationDisplay();
         updateDashboard();
     }
 
     function resetWater() {
+        if (!userData.hydration) userData.hydration = { current: 0, goal: 2000, history: [] };
+        
         // Save today's data to history
         const today = new Date().toLocaleDateString('pt-BR');
+        
+        if (!userData.hydration.history) userData.hydration.history = [];
+        
         userData.hydration.history.push({
             date: today,
             amount: userData.hydration.current,
@@ -2426,7 +2530,7 @@ function setupBackupReminders() {
         // Reset for today
         userData.hydration.current = 0;
         
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         updateHydrationDisplay();
         updateDashboard();
         updateHydrationHistory();
@@ -2436,8 +2540,10 @@ function setupBackupReminders() {
         const newGoal = parseInt(document.getElementById('water-goal-input').value);
         
         if (newGoal && newGoal > 0) {
+            if (!userData.hydration) userData.hydration = { current: 0, goal: 2000, history: [] };
+            
             userData.hydration.goal = newGoal;
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateHydrationDisplay();
             updateDashboard();
             alert(`Meta de água atualizada para ${newGoal}ml por dia!`);
@@ -2447,6 +2553,8 @@ function setupBackupReminders() {
     }
 
     function updateHydrationDisplay() {
+        if (!userData.hydration) return;
+        
         const percent = Math.min((userData.hydration.current / userData.hydration.goal) * 100, 100);
         
         const waterAmount = document.getElementById('water-amount');
@@ -2462,7 +2570,7 @@ function setupBackupReminders() {
         const container = document.getElementById('hydration-history');
         if (!container) return;
         
-        if (userData.hydration.history.length === 0) {
+        if (!userData.hydration || !userData.hydration.history || userData.hydration.history.length === 0) {
             container.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum histórico disponível</td></tr>';
             return;
         }
@@ -2487,7 +2595,7 @@ function setupBackupReminders() {
     function deleteHydrationHistoryItem(index) {
         if (confirm('Tem certeza que deseja excluir este registro?')) {
             userData.hydration.history.splice(index, 1);
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateHydrationHistory();
         }
     }
@@ -2495,7 +2603,7 @@ function setupBackupReminders() {
     function deleteAllHydrationHistory() {
         if (confirm('Tem certeza que deseja apagar TODO o histórico de hidratação?')) {
             userData.hydration.history = [];
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateHydrationHistory();
         }
     }
@@ -2528,6 +2636,8 @@ function setupBackupReminders() {
         if (!container) return;
         
         // Check if we have a meal plan for this day
+        if (!userData.mealPlans) userData.mealPlans = {};
+        
         if (!userData.mealPlans[day]) {
             userData.mealPlans[day] = [];
         }
@@ -2579,7 +2689,7 @@ function setupBackupReminders() {
     function deleteMeal(day, index) {
         if (confirm('Tem certeza que deseja excluir esta refeição?')) {
             userData.mealPlans[day].splice(index, 1);
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             loadMealPlan();
         }
     }
@@ -2587,14 +2697,14 @@ function setupBackupReminders() {
     function deleteAllMealsForDay() {
         const day = document.getElementById('week-day').value;
         
-        if (!userData.mealPlans[day] || userData.mealPlans[day].length === 0) {
+        if (!userData.mealPlans || !userData.mealPlans[day] || userData.mealPlans[day].length === 0) {
             alert('Não há refeições para apagar neste dia!');
             return;
         }
         
         if (confirm('Tem certeza que deseja apagar TODAS as refeições deste dia?')) {
             userData.mealPlans[day] = [];
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             loadMealPlan();
         }
     }
@@ -2610,6 +2720,8 @@ function setupBackupReminders() {
             return;
         }
         
+        if (!userData.mealPlans) userData.mealPlans = {};
+        
         // Initialize day array if needed
         if (!userData.mealPlans[day]) {
             userData.mealPlans[day] = [];
@@ -2623,7 +2735,7 @@ function setupBackupReminders() {
             id: Date.now()
         });
         
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         loadMealPlan();
         
         // Clear form
@@ -2679,6 +2791,8 @@ function setupBackupReminders() {
         }
         
         // Save to history
+        if (!userData.bmiHistory) userData.bmiHistory = [];
+        
         userData.bmiHistory.push({
             date: new Date().toLocaleDateString('pt-BR'),
             weight,
@@ -2687,13 +2801,13 @@ function setupBackupReminders() {
             classification
         });
         
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
     }
     
     function deleteAllBMIHistory() {
         if (confirm('Tem certeza que deseja apagar TODO o histórico de IMC?')) {
             userData.bmiHistory = [];
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             alert('Histórico de IMC apagado com sucesso!');
         }
     }
@@ -2755,6 +2869,7 @@ function setupBackupReminders() {
         
         // Update chart
         updateMacrosChart(proteinPercent, carbsPercent, fatPercent);
+        markChanges(); // MARCA MUDANÇA
     }
     
     function initializeMacrosChart() {
@@ -2763,115 +2878,114 @@ function setupBackupReminders() {
     }
     
     function updateMacrosChart(proteinPercent, carbsPercent, fatPercent) {
-    const canvas = document.getElementById('macros-chart');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw pie chart
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 10;
-    
-    let startAngle = 0;
-    
-    // Protein slice (green)
-    const proteinAngle = proteinPercent * 2 * Math.PI;
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, startAngle, startAngle + proteinAngle);
-    ctx.closePath();
-    ctx.fillStyle = '#4CAF50';
-    ctx.fill();
-    
-    // Draw protein label
-    const proteinMidAngle = startAngle + proteinAngle / 2;
-    const proteinTextRadius = radius * 0.6;
-    const proteinTextX = centerX + Math.cos(proteinMidAngle) * proteinTextRadius;
-    const proteinTextY = centerY + Math.sin(proteinMidAngle) * proteinTextRadius;
-    
-    ctx.save();
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 13px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Proteína', proteinTextX, proteinTextY);
-    ctx.restore();
-    
-    startAngle += proteinAngle;
-    
-    // Carbs slice (blue)
-    const carbsAngle = carbsPercent * 2 * Math.PI;
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, startAngle, startAngle + carbsAngle);
-    ctx.closePath();
-    ctx.fillStyle = '#2196F3';
-    ctx.fill();
-    
-    // Draw carbs label
-    const carbsMidAngle = startAngle + carbsAngle / 2;
-    const carbsTextRadius = radius * 0.6;
-    const carbsTextX = centerX + Math.cos(carbsMidAngle) * carbsTextRadius;
-    const carbsTextY = centerY + Math.sin(carbsMidAngle) * carbsTextRadius;
-    
-    ctx.save();
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 13px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    // Abreviação para caber melhor
-    ctx.fillText('Carbo', carbsTextX, carbsTextY);
-    ctx.restore();
-    
-    startAngle += carbsAngle;
-    
-    // Fat slice (orange)
-    const fatAngle = fatPercent * 2 * Math.PI;
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, startAngle, startAngle + fatAngle);
-    ctx.closePath();
-    ctx.fillStyle = '#FF9800';
-    ctx.fill();
-    
-    // Draw fat label
-    const fatMidAngle = startAngle + fatAngle / 2;
-    const fatTextRadius = radius * 0.6;
-    const fatTextX = centerX + Math.cos(fatMidAngle) * fatTextRadius;
-    const fatTextY = centerY + Math.sin(fatMidAngle) * fatTextRadius;
-    
-    ctx.save();
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 13px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Gordura', fatTextX, fatTextY);
-    ctx.restore();
-    
-    // Legenda simples na parte inferior
-    const legendY = canvas.height - 20;
-    
-    ctx.fillStyle = '#4CAF50';
-    ctx.fillRect(centerX - 100, legendY - 40, 15, 15);
-    ctx.fillStyle = '#333';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Proteína: ${(proteinPercent*100).toFixed(0)}%`, centerX - 80, legendY - 30);
-    
-    ctx.fillStyle = '#2196F3';
-    ctx.fillRect(centerX - 100, legendY - 20, 15, 15);
-    ctx.fillStyle = '#333';
-    ctx.fillText(`Carboidrato: ${(carbsPercent*100).toFixed(0)}%`, centerX - 80, legendY - 10);
-    
-    ctx.fillStyle = '#FF9800';
-    ctx.fillRect(centerX - 100, legendY, 15, 15);
-    ctx.fillStyle = '#333';
-    ctx.fillText(`Gordura: ${(fatPercent*100).toFixed(0)}%`, centerX - 80, legendY + 10);
-}
+        const canvas = document.getElementById('macros-chart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw pie chart
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) - 10;
+        
+        let startAngle = 0;
+        
+        // Protein slice (green)
+        const proteinAngle = proteinPercent * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + proteinAngle);
+        ctx.closePath();
+        ctx.fillStyle = '#4CAF50';
+        ctx.fill();
+        
+        // Draw protein label
+        const proteinMidAngle = startAngle + proteinAngle / 2;
+        const proteinTextRadius = radius * 0.6;
+        const proteinTextX = centerX + Math.cos(proteinMidAngle) * proteinTextRadius;
+        const proteinTextY = centerY + Math.sin(proteinMidAngle) * proteinTextRadius;
+        
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Proteína', proteinTextX, proteinTextY);
+        ctx.restore();
+        
+        startAngle += proteinAngle;
+        
+        // Carbs slice (blue)
+        const carbsAngle = carbsPercent * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + carbsAngle);
+        ctx.closePath();
+        ctx.fillStyle = '#2196F3';
+        ctx.fill();
+        
+        // Draw carbs label
+        const carbsMidAngle = startAngle + carbsAngle / 2;
+        const carbsTextRadius = radius * 0.6;
+        const carbsTextX = centerX + Math.cos(carbsMidAngle) * carbsTextRadius;
+        const carbsTextY = centerY + Math.sin(carbsMidAngle) * carbsTextRadius;
+        
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Carbo', carbsTextX, carbsTextY);
+        ctx.restore();
+        
+        startAngle += carbsAngle;
+        
+        // Fat slice (orange)
+        const fatAngle = fatPercent * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + fatAngle);
+        ctx.closePath();
+        ctx.fillStyle = '#FF9800';
+        ctx.fill();
+        
+        // Draw fat label
+        const fatMidAngle = startAngle + fatAngle / 2;
+        const fatTextRadius = radius * 0.6;
+        const fatTextX = centerX + Math.cos(fatMidAngle) * fatTextRadius;
+        const fatTextY = centerY + Math.sin(fatMidAngle) * fatTextRadius;
+        
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Gordura', fatTextX, fatTextY);
+        ctx.restore();
+        
+        // Legenda simples na parte inferior
+        const legendY = canvas.height - 20;
+        
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(centerX - 100, legendY - 40, 15, 15);
+        ctx.fillStyle = '#333';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Proteína: ${(proteinPercent*100).toFixed(0)}%`, centerX - 80, legendY - 30);
+        
+        ctx.fillStyle = '#2196F3';
+        ctx.fillRect(centerX - 100, legendY - 20, 15, 15);
+        ctx.fillStyle = '#333';
+        ctx.fillText(`Carboidrato: ${(carbsPercent*100).toFixed(0)}%`, centerX - 80, legendY - 10);
+        
+        ctx.fillStyle = '#FF9800';
+        ctx.fillRect(centerX - 100, legendY, 15, 15);
+        ctx.fillStyle = '#333';
+        ctx.fillText(`Gordura: ${(fatPercent*100).toFixed(0)}%`, centerX - 80, legendY + 10);
+    }
 
     // ANTHROPOMETRIC ASSESSMENT FUNCTIONS
     function calculateAnthropometric() {
@@ -2940,6 +3054,8 @@ function setupBackupReminders() {
         }
         
         // Save assessment
+        if (!userData.anthropometricAssessments) userData.anthropometricAssessments = [];
+        
         const assessment = {
             id: Date.now(),
             patientName,
@@ -2962,7 +3078,7 @@ function setupBackupReminders() {
         };
         
         userData.anthropometricAssessments.unshift(assessment);
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         updateAnthropometricHistory();
         
         // Clear form
@@ -2982,7 +3098,7 @@ function setupBackupReminders() {
         const container = document.getElementById('anthro-history');
         if (!container) return;
         
-        if (userData.anthropometricAssessments.length === 0) {
+        if (!userData.anthropometricAssessments || userData.anthropometricAssessments.length === 0) {
             container.innerHTML = '<p class="alert alert-info">Nenhuma avaliação realizada ainda.</p>';
             return;
         }
@@ -3024,7 +3140,7 @@ function setupBackupReminders() {
     function deleteAnthropometricAssessment(index) {
         if (confirm('Tem certeza que deseja excluir esta avaliação?')) {
             userData.anthropometricAssessments.splice(index, 1);
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateAnthropometricHistory();
         }
     }
@@ -3032,7 +3148,7 @@ function setupBackupReminders() {
     function deleteAllAnthropometricHistory() {
         if (confirm('Tem certeza que deseja apagar TODO o histórico de avaliações antropométricas?')) {
             userData.anthropometricAssessments = [];
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateAnthropometricHistory();
         }
     }
@@ -3042,7 +3158,7 @@ function setupBackupReminders() {
         const notesList = document.getElementById('notes-list');
         if (!notesList) return;
         
-        if (userData.notes.length === 0) {
+        if (!userData.notes || userData.notes.length === 0) {
             notesList.innerHTML = '<p class="alert alert-info">Nenhuma anotação salva ainda. Adicione sua primeira anotação!</p>';
             return;
         }
@@ -3091,6 +3207,8 @@ function setupBackupReminders() {
             return;
         }
         
+        if (!userData.notes) userData.notes = [];
+        
         const newNote = {
             subject,
             title,
@@ -3100,7 +3218,7 @@ function setupBackupReminders() {
         };
         
         userData.notes.unshift(newNote);
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         loadNotes();
         
         // Clear form
@@ -3118,6 +3236,8 @@ function setupBackupReminders() {
             loadNotes();
             return;
         }
+        
+        if (!userData.notes) return;
         
         const filteredNotes = userData.notes.filter(note => 
             note.title.toLowerCase().includes(searchTerm) || 
@@ -3182,7 +3302,7 @@ function setupBackupReminders() {
     function deleteNote(index) {
         if (confirm('Tem certeza que deseja excluir esta anotação?')) {
             userData.notes.splice(index, 1);
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             loadNotes();
         }
     }
@@ -3190,7 +3310,7 @@ function setupBackupReminders() {
     function deleteAllNotes() {
         if (confirm('Tem certeza que deseja apagar TODAS as anotações?')) {
             userData.notes = [];
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             loadNotes();
         }
     }
@@ -3229,6 +3349,16 @@ function setupBackupReminders() {
                 studyTimerActive = false;
                 
                 // Update study progress
+                if (!userData.studyProgress) {
+                    userData.studyProgress = {
+                        daily: 0,
+                        weekly: [0, 0, 0, 0, 0, 0, 0],
+                        subjects: [],
+                        dailyGoal: 120,
+                        weeklyGoal: 840
+                    };
+                }
+                
                 userData.studyProgress.daily += 25;
                 const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
                 // Adjust for our array (0 = Monday)
@@ -3238,7 +3368,7 @@ function setupBackupReminders() {
                 // Update study sessions
                 userData.studySessions++;
                 
-                saveData();
+                saveData(); // SALVA DIRETAMENTE
                 updateStudySessions();
                 updateDashboard();
                 updateProgressChart();
@@ -3352,13 +3482,23 @@ function setupBackupReminders() {
                     
                     if (currentMode === 'study') {
                         // Update study progress
+                        if (!userData.studyProgress) {
+                            userData.studyProgress = {
+                                daily: 0,
+                                weekly: [0, 0, 0, 0, 0, 0, 0],
+                                subjects: [],
+                                dailyGoal: 120,
+                                weeklyGoal: 840
+                            };
+                        }
+                        
                         userData.studyProgress.daily += 25;
                         const today = new Date().getDay();
                         const arrayDay = today === 0 ? 6 : today - 1;
                         userData.studyProgress.weekly[arrayDay] += 25;
                         userData.studySessions++;
                         
-                        saveData();
+                        saveData(); // SALVA DIRETAMENTE
                         updateStudySessions();
                         updateDashboard();
                         updateProgressChart();
@@ -3408,13 +3548,15 @@ function setupBackupReminders() {
     function updateStudySessions() {
         const sessionsCount = document.getElementById('sessions-count');
         if (sessionsCount) {
-            sessionsCount.textContent = userData.studySessions;
+            sessionsCount.textContent = userData.studySessions || 0;
         }
     }
     
     function updateSessionsHistory() {
         const container = document.getElementById('sessions-history');
         if (!container) return;
+        
+        if (!userData.sessionsHistory) userData.sessionsHistory = [];
         
         // Add today's session if it doesn't exist
         const today = new Date().toLocaleDateString('pt-BR');
@@ -3423,12 +3565,12 @@ function setupBackupReminders() {
         if (!todaySession) {
             userData.sessionsHistory.unshift({
                 date: today,
-                sessions: userData.studySessions,
-                totalTime: userData.studyProgress.daily
+                sessions: userData.studySessions || 0,
+                totalTime: userData.studyProgress?.daily || 0
             });
         } else {
-            todaySession.sessions = userData.studySessions;
-            todaySession.totalTime = userData.studyProgress.daily;
+            todaySession.sessions = userData.studySessions || 0;
+            todaySession.totalTime = userData.studyProgress?.daily || 0;
         }
         
         // Keep only last 7 days
@@ -3452,13 +3594,13 @@ function setupBackupReminders() {
         });
         
         container.innerHTML = html;
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
     }
     
     function deleteSessionHistoryItem(index) {
         if (confirm('Tem certeza que deseja excluir este registro?')) {
             userData.sessionsHistory.splice(index, 1);
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateSessionsHistory();
         }
     }
@@ -3466,7 +3608,7 @@ function setupBackupReminders() {
     function deleteAllSessionsHistory() {
         if (confirm('Tem certeza que deseja apagar TODO o histórico de sessões?')) {
             userData.sessionsHistory = [];
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateSessionsHistory();
         }
     }
@@ -3479,6 +3621,17 @@ function setupBackupReminders() {
         const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
         
         let html = '';
+        
+        if (!userData.studyProgress || !userData.studyProgress.weekly) {
+            userData.studyProgress = {
+                daily: 0,
+                weekly: [0, 0, 0, 0, 0, 0, 0],
+                subjects: [],
+                dailyGoal: 120,
+                weeklyGoal: 840
+            };
+        }
+        
         const maxTime = Math.max(...userData.studyProgress.weekly, 60); // At least 60 minutes for scale
         
         userData.studyProgress.weekly.forEach((time, index) => {
@@ -3498,6 +3651,16 @@ function setupBackupReminders() {
     function updateSubjectsProgress() {
         const container = document.getElementById('subjects-progress');
         if (!container) return;
+        
+        if (!userData.studyProgress || !userData.studyProgress.subjects) {
+            userData.studyProgress = {
+                daily: 0,
+                weekly: [0, 0, 0, 0, 0, 0, 0],
+                subjects: [],
+                dailyGoal: 120,
+                weeklyGoal: 840
+            };
+        }
         
         let html = '';
         userData.studyProgress.subjects.forEach((subject, index) => {
@@ -3532,9 +3695,11 @@ function setupBackupReminders() {
         
         select.innerHTML = '<option value="">Selecione uma disciplina</option>';
         
-        userData.studyProgress.subjects.forEach(subject => {
-            select.innerHTML += `<option value="${subject.name}">${subject.name}</option>`;
-        });
+        if (userData.studyProgress && userData.studyProgress.subjects) {
+            userData.studyProgress.subjects.forEach(subject => {
+                select.innerHTML += `<option value="${subject.name}">${subject.name}</option>`;
+            });
+        }
     }
     
     function addNewSubject() {
@@ -3543,6 +3708,20 @@ function setupBackupReminders() {
         if (!subjectName) {
             alert('Por favor, digite o nome da disciplina!');
             return;
+        }
+        
+        if (!userData.studyProgress) {
+            userData.studyProgress = {
+                daily: 0,
+                weekly: [0, 0, 0, 0, 0, 0, 0],
+                subjects: [],
+                dailyGoal: 120,
+                weeklyGoal: 840
+            };
+        }
+        
+        if (!userData.studyProgress.subjects) {
+            userData.studyProgress.subjects = [];
         }
         
         // Check if subject already exists
@@ -3558,7 +3737,7 @@ function setupBackupReminders() {
             goal: 180 // Default goal: 3 hours
         });
         
-        saveData();
+        saveData(); // SALVA DIRETAMENTE
         updateSubjectsProgress();
         document.getElementById('new-subject').value = '';
     }
@@ -3566,7 +3745,7 @@ function setupBackupReminders() {
     function deleteSubject(index) {
         if (confirm('Tem certeza que deseja excluir esta disciplina?')) {
             userData.studyProgress.subjects.splice(index, 1);
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateSubjectsProgress();
         }
     }
@@ -3574,7 +3753,7 @@ function setupBackupReminders() {
     function deleteAllSubjects() {
         if (confirm('Tem certeza que deseja apagar TODAS as disciplinas?')) {
             userData.studyProgress.subjects = [];
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateSubjectsProgress();
         }
     }
@@ -3598,6 +3777,16 @@ function setupBackupReminders() {
     }
     
     function addTimeToSelectedSubject(subjectName, minutes) {
+        if (!userData.studyProgress) {
+            userData.studyProgress = {
+                daily: 0,
+                weekly: [0, 0, 0, 0, 0, 0, 0],
+                subjects: [],
+                dailyGoal: 120,
+                weeklyGoal: 840
+            };
+        }
+        
         const subject = userData.studyProgress.subjects.find(s => s.name === subjectName);
         
         if (subject) {
@@ -3609,7 +3798,7 @@ function setupBackupReminders() {
             const arrayDay = today === 0 ? 6 : today - 1;
             userData.studyProgress.weekly[arrayDay] += minutes;
             
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateSubjectsProgress();
             updateProgressChart();
             updateDashboard();
@@ -3617,10 +3806,14 @@ function setupBackupReminders() {
             updateGoalsProgress();
             
             alert(`${minutes} minutos adicionados a ${subjectName}!`);
+        } else {
+            alert('Disciplina não encontrada!');
         }
     }
     
     function updateWeeklyTotal() {
+        if (!userData.studyProgress || !userData.studyProgress.weekly) return;
+        
         const weeklyTotal = userData.studyProgress.weekly.reduce((a, b) => a + b, 0);
         const weeklyTotalElement = document.getElementById('weekly-total');
         if (weeklyTotalElement) {
@@ -3629,6 +3822,16 @@ function setupBackupReminders() {
     }
     
     function updateGoalsProgress() {
+        if (!userData.studyProgress) {
+            userData.studyProgress = {
+                daily: 0,
+                weekly: [0, 0, 0, 0, 0, 0, 0],
+                subjects: [],
+                dailyGoal: 120,
+                weeklyGoal: 840
+            };
+        }
+        
         // Daily goal
         const dailyPercent = Math.min((userData.studyProgress.daily / userData.studyProgress.dailyGoal) * 100, 100);
         const dailyGoalProgress = document.getElementById('daily-goal-progress');
@@ -3660,8 +3863,18 @@ function setupBackupReminders() {
         const newGoal = parseInt(document.getElementById('daily-goal-input').value);
         
         if (newGoal && newGoal > 0) {
+            if (!userData.studyProgress) {
+                userData.studyProgress = {
+                    daily: 0,
+                    weekly: [0, 0, 0, 0, 0, 0, 0],
+                    subjects: [],
+                    dailyGoal: 120,
+                    weeklyGoal: 840
+                };
+            }
+            
             userData.studyProgress.dailyGoal = newGoal;
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateGoalsProgress();
             alert(`Meta diária atualizada para ${newGoal} minutos por dia!`);
         } else {
@@ -3673,8 +3886,18 @@ function setupBackupReminders() {
         const newGoal = parseInt(document.getElementById('weekly-goal-input').value);
         
         if (newGoal && newGoal > 0) {
+            if (!userData.studyProgress) {
+                userData.studyProgress = {
+                    daily: 0,
+                    weekly: [0, 0, 0, 0, 0, 0, 0],
+                    subjects: [],
+                    dailyGoal: 120,
+                    weeklyGoal: 840
+                };
+            }
+            
             userData.studyProgress.weeklyGoal = newGoal;
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateGoalsProgress();
             alert(`Meta semanal atualizada para ${newGoal} minutos por semana!`);
         } else {
@@ -3684,8 +3907,18 @@ function setupBackupReminders() {
     
     function resetWeeklyProgress() {
         if (confirm('Tem certeza que deseja reiniciar o progresso semanal?')) {
+            if (!userData.studyProgress) {
+                userData.studyProgress = {
+                    daily: 0,
+                    weekly: [0, 0, 0, 0, 0, 0, 0],
+                    subjects: [],
+                    dailyGoal: 120,
+                    weeklyGoal: 840
+                };
+            }
+            
             userData.studyProgress.weekly = [0, 0, 0, 0, 0, 0, 0];
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateProgressChart();
             updateWeeklyTotal();
             updateGoalsProgress();
@@ -3694,17 +3927,29 @@ function setupBackupReminders() {
     
     function resetStudyProgress() {
         if (confirm('Tem certeza que deseja reiniciar TODO o progresso de estudos?')) {
+            if (!userData.studyProgress) {
+                userData.studyProgress = {
+                    daily: 0,
+                    weekly: [0, 0, 0, 0, 0, 0, 0],
+                    subjects: [],
+                    dailyGoal: 120,
+                    weeklyGoal: 840
+                };
+            }
+            
             userData.studyProgress.daily = 0;
             userData.studyProgress.weekly = [0, 0, 0, 0, 0, 0, 0];
             userData.studySessions = 0;
             userData.sessionsHistory = [];
             
             // Reset subject times but keep subjects
-            userData.studyProgress.subjects.forEach(subject => {
-                subject.time = 0;
-            });
+            if (userData.studyProgress.subjects) {
+                userData.studyProgress.subjects.forEach(subject => {
+                    subject.time = 0;
+                });
+            }
             
-            saveData();
+            saveData(); // SALVA DIRETAMENTE
             updateStudySessions();
             updateDashboard();
             updateProgressChart();
@@ -3715,74 +3960,6 @@ function setupBackupReminders() {
         }
     }
 
-    // Initialize the application
-    document.addEventListener('DOMContentLoaded', function() {
-        // Load saved data
-        loadData();
-        
-        // Update saved calculations display
-        updateSavedCalculations();
-        
-        // Load meal plan for current day
-        loadMealPlan();
-        
-        // Update hydration history
-        updateHydrationHistory();
-        
-        // Update study sessions
-        updateStudySessions();
-        
-        // Load tasks
-        loadTasks();
-        
-        // Load notes
-        loadNotes();
-        
-        // Update progress chart
-        updateProgressChart();
-        
-        // Update subjects progress
-        updateSubjectsProgress();
-        
-        // Update sessions history
-        updateSessionsHistory();
-        
-        // Update weekly total
-        updateWeeklyTotal();
-        
-        // Update goals progress
-        updateGoalsProgress();
-        
-        // Update anthropometric history
-        updateAnthropometricHistory();
-        
-        // Set current date for next exam
-        const nextExamDate = new Date();
-        nextExamDate.setDate(nextExamDate.getDate() + 15);
-        const nextExamElement = document.getElementById('next-exam');
-        if (nextExamElement) {
-            nextExamElement.textContent = 
-                `Fisiologia - ${nextExamDate.toLocaleDateString('pt-BR')}`;
-        }
-        
-        // Check for notification permission
-        if (Notification.permission === "default") {
-            setTimeout(() => {
-                if (confirm("Deseja receber lembretes de hidratação e estudos?")) {
-                    Notification.requestPermission();
-                }
-            }, 2000);
-        }
-        
-        // Initialize macros chart
-        setTimeout(initializeMacrosChart, 100);
-        
-        // Set today's date in anthropometric form
-        const today = new Date().toISOString().split('T')[0];
-        const assessmentDate = document.getElementById('assessment-date');
-        if (assessmentDate) {
-            assessmentDate.value = today;
-        }
-    });
-
-</script>
+    </script>
+</body>
+</html>
